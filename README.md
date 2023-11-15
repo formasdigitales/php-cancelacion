@@ -9,24 +9,6 @@ Inicializamos la clase y pasamos los parámetros para hacer el request
 
 # Ejemplo de cancelación
 
-```PHP
-$clienteFD = new ClienteFormasDigitales();
-$parametros = new Parametros();
-$parametros->rfcEmisor = $rfc_emisor;
-$parametros->fecha = $fecha_actual;
-$parametros->folios = $folios;
-$parametros->publicKey = $clienteFD->getCertificate($certFile);
-$parametros->privateKey = $clienteFD->getCertificate($keyFile);
-$parametros->password = $keyPassword;
-// Datos de autenticación del WS
-$autentica = new Autenticar();
-$autentica->usuario = "pruebasWS";
-$autentica->password = "pruebasWS";
-$parametros->accesos = $autentica;
-```
-
-<br>
-
 La clase **_Cancelacion_** integra todos los metodos, variables y atributos para la cancelación.
 
 ```PHP
