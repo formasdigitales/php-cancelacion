@@ -5,6 +5,7 @@ El ejemplo presentado se realizo en la versión PHP 8.2.12, habilitando la exten
 
 La clase **_Cancelacion_** integra todos los metodos, variables y atributos requeridos para la cancelación.
 
+# Clase Cancelacion
 ```PHP
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // ATRIBUTO
@@ -82,10 +83,14 @@ La clase **_Cancelacion_** integra todos los metodos, variables y atributos requ
 		}
 	}
 ```
+* El atributo datos almacena todos los valores requeridos para cancelar.
+* El método WSFolios() forma los folios a cancelar
+* La clase Autenticar se utiliza para los accesos del Web Service Formas Digitales
+* La clase Parametros integra los atributos de cancelación.
 
-# Enviar Solicitud
-La clase **_ClienteFormasDigitales_** recibirá los parámetros para la cancelación.
 
+# Clase ClienteFormasDigitales
+La clase **_ClienteFormasDigitales_** recibirá los parámetros para la cancelación y los envia al  Web Service Formas Digitales.
 
 ```PHP
     private $wsdlUrl = 'http://dev33.facturacfdi.mx:80/WSCancelacion40Service?wsdl';
