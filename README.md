@@ -3,11 +3,7 @@
 
 El ejemplo presentado se realizo en la versión PHP 8.2.12, habilitando la extension **_extension=soap_**.
 
-En los recursos se encuentra la clase **_ClienteFormasDigitales_** que ayuda en el proceso de cancelacion CFDI.
-
-Inicializamos la clase y pasamos los parámetros para hacer el request
-
-# Ejemplo de cancelación
+# Requisitos Cancelación
 
 La clase **_Cancelacion_** integra todos los metodos, variables y atributos para la cancelación.
 
@@ -89,6 +85,7 @@ La clase **_Cancelacion_** integra todos los metodos, variables y atributos para
 	}
 ```
 
+# Enviar Solicitud
 La clase **_ClienteFormasDigitales_** recibirá los parámetros para la cancelación.
 
 
