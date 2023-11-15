@@ -19,6 +19,7 @@ class Cancelacion{
 			"keyPassCSD"=>"12345678a",
 			"userWS"=>"pruebasWS",
 			"passWS"=>"pruebasWS"
+			
 		];
 	}
 
@@ -72,19 +73,15 @@ class Cancelacion{
 			$responseCancelacion = $clienteFD->enviarCancelacion($parametros);
 
 			// MOSTRAMOS LOS MENSAJES DE RESPUESTA
-			if(isset($responseCancelacion->return->mensaje)){
-				echo "Cod. Error: ". $responseCancelacion->return->codEstatus;
-				echo " Mensaje: " .$responseCancelacion->return->mensaje;
-			}
+			echo "<b>Response</b>:<br>";
+
+			if(isset($responseCancelacion->return->mensaje))
+				echo "Cod. Error: ". $responseCancelacion->return->codEstatus. " Mensaje: " .$responseCancelacion->return->mensaje;
 			
-			if(isset($responseCancelacion->return->acuse)){
-				foreach($responseCancelacion->return->folios->folio as $UUID){
-					echo "Estatus UUID: " . $UUID->estatusUUID;
-					echo " Mensaje: " . $UUID->mensaje;
-					echo "<br>";
-				}
-			}
-	
+			// SE IMPRIME EL XML EN UN TEXTAREA
+			if(isset($responseCancelacion->return->acuse)) 
+				echo "<textarea style='display:block;width:100%;height:300px'>".$responseCancelacion->return->acuse."</textarea>";
+				
 		
 		} catch (SoapFault $e) {
 			print("Auth Error:::: $e");
@@ -97,8 +94,8 @@ class Cancelacion{
 
 		// INSERTAMOS LOS DATOS
 		$wsFolio->motivo = $motivo;
-		$wsFolio->uuid = $uuid; 
-		$wsFolio->folioSustitucion = ($motivo=="01") ? $folioSustitucion : '' ;
+		$wsFolio->uuid = $uuid; // Puedes cambiar el valor según tus necesidades
+		$wsFolio->folioSustitucion = ($motivo=="01") ? $folioSustitucion : '' ; // Puedes cambiar el valor según tus necesidades
 		
 		// INSERTAMOS EL FOLIO A FOLIOS Y RETORNAMOS
 		$wsFolios40 = new stdClass(); // CREAMOS WSFOLIOS40
@@ -116,7 +113,7 @@ class Autenticar{
 // PARAMETROS REQUERIDOS PARA LA CANCELACION
 class Parametros{
 	public $rfcEmisor; 			// STRING
-	public $fechaCancelacion;		// STRING
+	public $fechaCancelacion;	// STRING
 	public $folios;				// LIST
 	public $cerCSD;				// BYTE[]
 	public $keyCSD;				// BYTE[]
