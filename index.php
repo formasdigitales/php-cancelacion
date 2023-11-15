@@ -1,69 +1,130 @@
 <?php	
-require_once('./cliente_formas_digitales.php');
-	header ('Content-type: text/html; charset=utf-8');	
-	try {
-	
-		set_time_limit(0);
-		date_default_timezone_set("America/Mexico_City");
+require_once "./cliente_formas_digitales.php";
+header('Content-type: text/html; charset=utf-8');	
 
-		// Datos del emisor
-		$rfc_emisor = "EWE1709045U0";
-		$fecha_actual = substr( date('c'), 0, 19);
-		$folios = 'CE1624C7-1317-4C8D-A047-210E043F6F55';
-		// Archivos del certificado
-		$certFile =  dirname(__FILE__) . "/resources/CSD_EWE1709045U0_20190617_132205s.cer";
-		$keyFile =  dirname(__FILE__) . "/resources/CSD_EWE1709045U0_20190617_132205.key";
-		$keyPassword =  "12345678a";
+class Cancelacion{
 
-		// Inicializamos y pasamos los parametros para hacer el request
-		$clienteFD = new ClienteFormasDigitales();
-		$parametros = new Parametros();
-		$parametros->rfcEmisor = $rfc_emisor;
-		$parametros->fecha = $fecha_actual;
-		$parametros->folios = $folios;
-		$parametros->publicKey = $clienteFD->getCertificate($certFile);
-		$parametros->privateKey = $clienteFD->getCertificate($keyFile);
-		$parametros->password = $keyPassword;
-		// Datos de autenticación del WS
-		$autentica = new Autenticar();
-		$autentica->usuario = "pruebasWS";
-		$autentica->password = "pruebasWS";
-		$parametros->accesos = $autentica;
-		// Mandamos a cancelar el UUID al WebService
-		$responseCancelacion = $clienteFD->cancelar($parametros);
+	// ATRIBUTO
+	public $datos;
 
+	// METODO CONSTRUCTOR
+	function __construct(){
 
-		// En caso de error muestra el código de error y el mensaje de respuesta del servicio
-		if(isset($responseCancelacion->return->mensaje)){
-			echo "<br><br>Codigo Error: " . $responseCancelacion->return->codEstatus."<br><br>Mensaje: " . $responseCancelacion->return->mensaje. "<br>";
-		}
-
-		// En caso de cancelación correcta, guarda el xml en un textarea
-		if(isset($responseCancelacion->return->acuse)){
-			echo "<br><br>Estatus UUID: " . $responseCancelacion->return->folios->folio->estatusUUID."<br>Mensaje: " . $responseCancelacion->return->folios->folio->mensaje;
-			echo '<br>XML timbrado:<br><textarea>' . $responseCancelacion->return->acuse . '</textarea>';
-		}
-
-	
-	} catch (SoapFault $e) {
-		print("Auth Error:::: $e");
+		// ASIGNAMOS LOS DATOS
+		$this->datos = [
+			"rfcEmisor"=>"EKU9003173C9",
+			"fechaCancelacion"=>$this->getDateISO8601(),
+			"cerCSD"=>"C:\\Certificados\\CSD_Sucursal_1_EKU9003173C9_20230517_223850.cer",
+			"keyCSD"=>"C:\\Certificados\\CSD_Sucursal_1_EKU9003173C9_20230517_223850.key",
+			"keyPassCSD"=>"12345678a",
+			"userWS"=>"pruebasWS",
+			"passWS"=>"pruebasWS"
+		];
 	}
 
+	// METODO PARA RETORNAR EL CERTIFICADO EN BYTE[]
+	public function getByte($certFile) {
+		return file_get_contents($certFile);
+	}
+ 
+	// METODO PARA OBTENER LA FECHA ACTUAL
+	public function getDateISO8601(){
+		return substr( date('c'), 0, 19);
+	}
 
+	//	METODO PARA CANCELAR
+	public function solicitudCancelacion(){
+		try {
+			date_default_timezone_set("America/Mexico_City");
+			set_time_limit(0); // OPCIONAL: EJECUTA ESTE SCRIPT SIN LIMITE DE TIEMPO
+			
 	
+			// OBJETO WSFOLIOS
+			$wsFolios40 = new stdClass();
+
+			// GENERAMOS LOS FOLIOS A CANCELAR
+			$wsFolios40 =  array(
+				$this->WSFolios("01","B2E348F2-5163-4CFA-BB23-5A514C8E63D4","969D1264-EE5D-49A4-979B-96521CC82ADB"),
+				$this->WSFolios("02","314FEAB4-8555-446D-831F-E0D187BFDA79",""),
+				$this->WSFolios("03","12DB9C0D-543A-488A-962E-D25929096249",""),
+				$this->WSFolios("04","681CFDCF-8304-4C76-93AF-4C517407142C","")
+			);
+
+			// INSTANCIAMOS PARA INGRESAR LOS DATOS AL REQUEST
+			$clienteFD = new ClienteFormasDigitales();
+
+			// AUTENTICACION
+			$accesos = new Autenticar();
+			$accesos->usuario = $this->datos["userWS"];
+			$accesos->password = $this->datos["passWS"];
+
+			// AGREGAMOS LOS PARAMETROS
+			@$parametros = new Parametros();
+			@$parametros->rfcEmisor = $this->datos["rfcEmisor"];
+			@$parametros->fecha = $this->datos["fechaCancelacion"];
+			@$parametros->folios = $wsFolios40;
+			@$parametros->publicKey = $this->getByte( $this->datos["cerCSD"] );
+			@$parametros->privateKey = $this->getByte( $this->datos["keyCSD"] );
+			@$parametros->password = $this->datos["keyPassCSD"];
+			@$parametros->accesos = $accesos;
+			
+			// MANDAMOS A CANCELAR
+			$responseCancelacion = $clienteFD->enviarCancelacion($parametros);
+
+			// MOSTRAMOS LOS MENSAJES DE RESPUESTA
+			if(isset($responseCancelacion->return->mensaje)){
+				echo "Cod. Error: ". $responseCancelacion->return->codEstatus;
+				echo " Mensaje: " .$responseCancelacion->return->mensaje;
+			}
+			
+			if(isset($responseCancelacion->return->acuse)){
+				foreach($responseCancelacion->return->folios->folio as $UUID){
+					echo "Estatus UUID: " . $UUID->estatusUUID;
+					echo " Mensaje: " . $UUID->mensaje;
+					echo "<br>";
+				}
+			}
+	
+		
+		} catch (SoapFault $e) {
+			print("Auth Error:::: $e");
+		}
+	}
+
+	// METODO PARA CREAR LOS FOLIOS A CANCELAR
+	public function WSFolios($motivo,$uuid,$folioSustitucion){		
+		$wsFolio = new stdClass(); // CREAMOS WSFOLIO
+
+		// INSERTAMOS LOS DATOS
+		$wsFolio->motivo = $motivo;
+		$wsFolio->uuid = $uuid; 
+		$wsFolio->folioSustitucion = ($motivo=="01") ? $folioSustitucion : '' ;
+		
+		// INSERTAMOS EL FOLIO A FOLIOS Y RETORNAMOS
+		$wsFolios40 = new stdClass(); // CREAMOS WSFOLIOS40
+		$wsFolios40->folio = $wsFolio;
+		return $wsFolios40;
+	}
+}
+
+// CLASE PARA LOS ACCESOS DEL WEB SERVICE
 class Autenticar{
-	public $password;
-	public $usuario;
+	public $password; // STRING
+	public $usuario;  // STRING
 }
 
-
+// PARAMETROS REQUERIDOS PARA LA CANCELACION
 class Parametros{
-	public $rfcEmisor;
-	public $fecha;
-	public $folios;
-	public $publicKey;
-	public $privateKey;
-	public $password;
-	public $accesos;
+	public $rfcEmisor; 			// STRING
+	public $fechaCancelacion;		// STRING
+	public $folios;				// LIST
+	public $cerCSD;				// BYTE[]
+	public $keyCSD;				// BYTE[]
+	public $keyPassCSD;			// STRING
+	public $accesos;			// CLASE
 }
+
+// EJECUTAMOS LA CANCELACION
+$cancelacion = new Cancelacion();
+$cancelacion->solicitudCancelacion();
 ?>
